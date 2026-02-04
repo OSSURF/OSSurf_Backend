@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const RepoSchema = z.object({
   github_id: z.number().int().positive(),
@@ -12,7 +12,6 @@ export const RepoSchema = z.object({
   forks_count: z.number().int().nonnegative().default(0),
   watchers_count: z.number().int().nonnegative().default(0),
   open_issues_count: z.number().int().nonnegative().default(0),
-  is_yc: z.boolean().default(false),
   created_at: z.coerce.date().nullable(),
   updated_at: z.coerce.date().nullable(),
   last_synced_at: z.coerce.date(),

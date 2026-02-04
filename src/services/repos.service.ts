@@ -1,6 +1,6 @@
-import { db } from '@/db/client';
-import { repos } from '@/db/schemas/repos';
-import { InferInsertModel } from 'drizzle-orm';
+import { db } from "@/db/client";
+import { repos } from "@/db/schemas/repos";
+import { InferInsertModel } from "drizzle-orm";
 
 type RepoType = InferInsertModel<typeof repos>;
 
@@ -17,7 +17,6 @@ export const upsertRepo = async (data: RepoType) => {
         watchers_count: data.watchers_count,
         open_issues_count: data.open_issues_count,
         updated_at: data.updated_at,
-        is_yc: data.is_yc,
       },
     })
     .returning({ id: repos.id });
