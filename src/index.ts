@@ -7,7 +7,6 @@ import cors from "cors";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./lib/auth";
 
-import webhookRoutes from "./routes/webhooks.route";
 import trendingRoutes from "./routes/trending.route";
 import discoverRoutes from "./routes/discover.route";
 import findIssues from "./routes/find-issues.route";
@@ -20,16 +19,34 @@ import ycRoutes from "./routes/yc.route";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+      ];
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-app.all("/api/auth/*splat", toNodeHandler(auth));
+
+// Better Auth handler (Express v4 syntax)
+app.all("/api/auth/*", toNodeHandler(auth));
+
 app.use(express.json());
 
-app.use("/api/webhooks", webhookRoutes);
 app.use("/api/trending", trendingRoutes);
 app.use("/api/discover", discoverRoutes);
 app.use("/api/findIssues", findIssues);
@@ -38,7 +55,7 @@ app.use("/api/track-prs", trackPrsRoutes);
 app.use("/api/track-issues", trackIssuesRoutes);
 app.use("/api/dashboard/", dashboardRoutes);
 app.use("/api/yc", ycRoutes);
-app.use("/api", profileRoutes);
+app.use("/api/profile", profileRoutes);
 app.get("/", (req: Request, res: Response) => {
   res.send("SourceSurf API is running");
 });

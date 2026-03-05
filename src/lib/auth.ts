@@ -1,13 +1,14 @@
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '../db/client';
-import dotenv from 'dotenv';
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { db } from "../db/client";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 export const auth = betterAuth({
+  baseURL: "http://localhost:3000",
   database: drizzleAdapter(db, {
-    provider: 'pg',
+    provider: "pg",
   }),
   emailAndPassword: {
     enabled: true,
@@ -22,11 +23,17 @@ export const auth = betterAuth({
     //   clientSecret:process.env.GITHUB_CLIENT_SECRET!,
     // }
   },
+  trustedOrigins: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+  ],
   account: {
     accountLinking: {
       enabled: true,
-      trustedProviders: ['github', 'google'],
+      trustedProviders: ["github", "google"],
     },
   },
 });
-
