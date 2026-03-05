@@ -1,6 +1,6 @@
 import { redis, isRedisConnected } from "../lib/redis";
 const SCRAPER_API_URL =
-  process.env.SCRAPER_API_URL || "http://localhost:8001/api";
+  process.env.SCRAPER_API_URL || "http://localhost:8008/api";
 
 export interface TrendingRepo {
   id: number;
