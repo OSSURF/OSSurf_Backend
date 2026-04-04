@@ -81,8 +81,12 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
 export const cacheKeys = {
   trending: (period: string) => `trending:${period}`,
   gsoc: (page: number, perPage: number) => `gsoc:${page}:${perPage}`,
-  discover: (language: string, sort: string, page: number) =>
-    `discover:${language || "all"}:${sort}:${page}`,
+  discover: (
+    language: string,
+    sort: string,
+    page: number,
+    perPage: number,
+  ) => `discover:${language || "all"}:${sort}:${page}:${perPage}`,
   findIssues: (
     language: string,
     labels: string,
