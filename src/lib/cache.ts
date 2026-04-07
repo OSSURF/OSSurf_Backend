@@ -79,7 +79,8 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
 
 /** Cache key builders — centralised to avoid typos */
 export const cacheKeys = {
-  trending: (period: string) => `trending:${period}`,
+  trending: (period: string, page: number, perPage: number) =>
+    `trending:${period}:${page}:${perPage}`,
   gsoc: (page: number, perPage: number) => `gsoc:${page}:${perPage}`,
   discover: (
     language: string,
@@ -93,7 +94,7 @@ export const cacheKeys = {
     page: number,
     perPage: number,
   ) => `findIssues:${language || "all"}:${labels || "none"}:${page}:${perPage}`,
-  ycRepos: (page: number) => `yc:${page}`,
+  ycRepos: (page: number, perPage: number) => `yc:${page}:${perPage}`,
   profile: (username: string) => `profile:${username}`,
 };
 
