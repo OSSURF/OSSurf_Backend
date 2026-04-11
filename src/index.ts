@@ -17,6 +17,7 @@ import dashboardRoutes from "./routes/dashboard.route";
 import profileRoutes from "./routes/profile.route";
 import ycRoutes from "./routes/yc.route";
 import contributorsRoutes from "./routes/contributors.route";
+import webhooksRoutes from "./routes/webhooks.route";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -48,6 +49,8 @@ app.all("/api/auth/*", toNodeHandler(auth));
 
 app.use(express.json());
 
+
+
 app.use("/api/trending", trendingRoutes);
 app.use("/api/discover", discoverRoutes);
 app.use("/api/findIssues", findIssues);
@@ -58,6 +61,8 @@ app.use("/api/dashboard/", dashboardRoutes);
 app.use("/api/yc", ycRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/contributors", contributorsRoutes);
+app.use("/api/webhooks", webhooksRoutes);
+
 app.get("/", (req: Request, res: Response) => {
   res.send("SourceSurf API is running");
 });

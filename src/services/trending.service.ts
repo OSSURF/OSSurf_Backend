@@ -1,6 +1,8 @@
 import { redis, isRedisConnected } from "../lib/redis";
-const SCRAPER_API_URL =
-  process.env.SCRAPER_API_URL || "http://localhost:8008/api";
+import { db } from "../db/client";
+import { repos } from "../db/schemas/repos";
+import { trending_repos } from "../db/schemas/trending";
+import { eq, desc } from "drizzle-orm";
 
 export interface TrendingRepo {
   id: number;
@@ -21,35 +23,45 @@ export const getTrendingRepos = async (
   period: string,
 ): Promise<TrendingRepo[]> => {
   const cacheKey = `trending:${period}`;
+
   // Try cache first
   if (isRedisConnected()) {
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      try {
-        return JSON.parse(cached);
-      } catch (e) {
-        // ignore parse error, fallback to fetch
-      }
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as TrendingRepo[];
+    } catch {
+      // ignore, fall through to fetch
     }
   }
 
-  const url = `${SCRAPER_API_URL}/trending?period=${encodeURIComponent(period)}`;
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
-  });
+  // Fetch directly from database
+  const result = await db
+    .select({
+      id: repos.id,
+      github_id: repos.github_id,
+      owner: repos.owner,
+      repo_name: repos.repo_name,
+      full_name: repos.full_name,
+      url: repos.url,
+      description: repos.description,
+      language: repos.language,
+      stargazers_count: repos.stargazers_count,
+      forks_count: repos.forks_count,
+      stars_earned: trending_repos.stars_earned,
+      period: trending_repos.period,
+    })
+    .from(trending_repos)
+    .innerJoin(repos, eq(trending_repos.repo_id, repos.id))
+    .where(eq(trending_repos.period, period))
+    .orderBy(desc(trending_repos.stars_earned));
 
-  if (!response.ok) {
-    throw new Error(
-      `Scraper API returned ${response.status}: ${response.statusText}`,
-    );
-  }
+  const data: TrendingRepo[] = result;
 
-  const data: TrendingRepo[] = await response.json();
-
-  // Cache result for 10 minutes
+  // Cache result for 15 minutes
   if (isRedisConnected()) {
-    await redis.set(cacheKey, JSON.stringify(data), "EX", 600);
+    redis.set(cacheKey, JSON.stringify(data), "EX", 15 * 60).catch(() => {});
   }
 
   return data;
 };
+
