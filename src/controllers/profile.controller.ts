@@ -143,6 +143,9 @@ export const getProfile = async (req: Request, res: Response) => {
 
           githubClient.rest.search.issuesAndPullRequests({
             q: `author:${profileData.username} type:pr`,
+            sort: "updated",
+            order: "desc",
+            per_page: 5,
           }),
 
           githubClient.rest.search.issuesAndPullRequests({
@@ -155,6 +158,9 @@ export const getProfile = async (req: Request, res: Response) => {
 
           githubClient.rest.search.issuesAndPullRequests({
             q: `author:${profileData.username} type:issue`,
+            sort: "updated",
+            order: "desc",
+            per_page: 5,
           }),
 
           githubClient.rest.search.issuesAndPullRequests({
@@ -341,8 +347,32 @@ export const getProfile = async (req: Request, res: Response) => {
             value,
           }));
 
+        const recentPrs = (prsData as any).items ? (prsData as any).items.map((item: any) => ({
+          id: item.id,
+          repo_owner: item.repository_url?.split("/").slice(-2, -1)[0] || profileData.username,
+          repo_name: item.repository_url?.split("/").slice(-1)[0] || "repo",
+          number: item.number,
+          html_url: item.html_url,
+          title: item.title,
+          state: item.state,
+          author: item.user?.login || profileData.username,
+        })) : [];
+
+        const recentIssues = (issuesData as any).items ? (issuesData as any).items.map((item: any) => ({
+          id: item.id,
+          repo_owner: item.repository_url?.split("/").slice(-2, -1)[0] || profileData.username,
+          repo_name: item.repository_url?.split("/").slice(-1)[0] || "repo",
+          number: item.number,
+          html_url: item.html_url,
+          title: item.title,
+          state: item.state,
+          author: item.user?.login || profileData.username,
+        })) : [];
+
         const repsonseData = {
           ...profileData,
+          recentPrs,
+          recentIssues,
           stats: {
             totalCommits: totalCommits,
             totalPrs: totalPrs,
