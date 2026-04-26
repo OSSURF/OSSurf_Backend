@@ -15,7 +15,6 @@ export const handleTrendingWebhook = async (req: Request, res: Response): Promis
   }
 
   const { repoList, category } = req.body;
-  
   if (!repoList || !category || !Array.isArray(repoList)) {
     res.status(400).json({ error: "Invalid payload format" });
     return;
