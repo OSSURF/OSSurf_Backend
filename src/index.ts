@@ -10,7 +10,7 @@ import { auth } from "./lib/auth";
 import trendingRoutes from "./routes/trending.route";
 import discoverRoutes from "./routes/discover.route";
 import findIssues from "./routes/find-issues.route";
-import findGSOC from "./routes/gsoc.route";
+import findGSOC from "./routes/find-gsoc.route";
 import trackPrsRoutes from "./routes/track-prs.route";
 import trackIssuesRoutes from "./routes/track-issues.route";
 import dashboardRoutes from "./routes/dashboard.route";

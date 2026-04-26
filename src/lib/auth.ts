@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const auth = betterAuth({
-  baseURL: "http://localhost:3000",
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
@@ -29,7 +29,8 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
-  ],
+    process.env.FRONTEND_URL as string,
+  ].filter(Boolean),
   account: {
     accountLinking: {
       enabled: true,
