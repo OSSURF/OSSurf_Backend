@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ quiet: true } as any);
 
 import express from "express";
 import { Request, Response } from "express";
@@ -18,6 +18,9 @@ import profileRoutes from "./routes/profile.route";
 import ycRoutes from "./routes/yc.route";
 import contributorsRoutes from "./routes/contributors.route";
 import webhooksRoutes from "./routes/webhooks.route";
+import adminRoutes from "./routes/admin.route";
+import { registerSchedules } from "./jobs/scheduler";
+import "./jobs/worker";
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -62,10 +65,12 @@ app.use("/api/yc", ycRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/contributors", contributorsRoutes);
 app.use("/api/webhooks", webhooksRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("SourceSurf API is running");
 });
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  await registerSchedules();
 });
