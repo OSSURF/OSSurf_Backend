@@ -1,17 +1,17 @@
-import { Worker, Job } from "bullmq";
-import { bullConnection } from "./connection";
-import axios from "axios";
-import { db } from "../db/client";
-import { repos } from "../db/schemas/repos";
-import { trending_repos } from "../db/schemas/trending";
-import { eq } from "drizzle-orm";
-import { octokit } from "../lib/github";
-import { invalidateCachePattern } from "../lib/cache";
+import { Worker, Job } from 'bullmq';
+import { bullConnection } from './connection';
+import axios from 'axios';
+import { db } from '../db/client';
+import { repos } from '../db/schemas/repos';
+import { trending_repos } from '../db/schemas/trending';
+import { eq } from 'drizzle-orm';
+import { octokit } from '../lib/github';
+import { invalidateCachePattern } from '../lib/cache';
 
-const SCRAPER_URL = process.env.SCRAPER_URL || "http://localhost:8000";
+const SCRAPER_URL = process.env.SCRAPER_URL || 'http://localhost:8000';
 
 interface ScrapeTrendingData {
-  period: "daily" | "weekly" | "monthly";
+  period: 'daily' | 'weekly' | 'monthly';
 }
 
 async function processTrendingJob(job: Job<ScrapeTrendingData>) {
@@ -29,22 +29,18 @@ async function processTrendingJob(job: Job<ScrapeTrendingData>) {
   console.log(` Received ${scrapedRepos.length} repos from scraper`);
   await job.updateProgress(20);
 
-  // Clear old trending entries for this period
   await db.delete(trending_repos).where(eq(trending_repos.period, period));
   await job.updateProgress(30);
 
-  // Upsert each repo
   let processed = 0;
   for (const item of scrapedRepos) {
     const { owner, repo, stars_earned } = item;
     const full_name = `${owner}/${repo}`;
 
     try {
-      // Fetch full metadata from GitHub API
       const githubRes = await octokit.repos.get({ owner, repo });
       const ghData = githubRes.data;
 
-      // Upsert into repos table
       const [inserted] = await db
         .insert(repos)
         .values({
@@ -76,55 +72,57 @@ async function processTrendingJob(job: Job<ScrapeTrendingData>) {
         })
         .returning({ id: repos.id });
 
-      // Upsert into trending_repos (uses unique index on repo_id + period)
-      await db.insert(trending_repos).values({
-        repo_id: inserted.id,
-        period: period,
-        stars_earned: stars_earned || 0,
-        created_at: new Date(),
-      }).onConflictDoUpdate({
-        target: [trending_repos.repo_id, trending_repos.period],
-        set: {
+      await db
+        .insert(trending_repos)
+        .values({
+          repo_id: inserted.id,
+          period: period,
           stars_earned: stars_earned || 0,
           created_at: new Date(),
-        },
-      });
+        })
+        .onConflictDoUpdate({
+          target: [trending_repos.repo_id, trending_repos.period],
+          set: {
+            stars_earned: stars_earned || 0,
+            created_at: new Date(),
+          },
+        });
 
       processed++;
     } catch (err) {
       console.error(`Error processing ${full_name}:`, (err as Error).message);
     }
 
-    // Update progress proportionally (30% to 90%)
     const progress = 30 + Math.round((processed / scrapedRepos.length) * 60);
     await job.updateProgress(progress);
   }
 
-  // Invalidate trending cache
-  await invalidateCachePattern("trending:*");
+  await invalidateCachePattern('trending:*');
   await job.updateProgress(100);
 
-  console.log(`Processed ${processed}/${scrapedRepos.length} repos for ${period}`);
+  console.log(
+    `Processed ${processed}/${scrapedRepos.length} repos for ${period}`
+  );
   return { period, total: scrapedRepos.length, processed };
 }
 
 export const trendingWorker = new Worker<ScrapeTrendingData>(
-  "trending",
+  'trending',
   processTrendingJob,
   {
     connection: bullConnection,
-    concurrency: 1, // one scrape at a time
-  },
+    concurrency: 1,
+  }
 );
 
-trendingWorker.on("completed", (job, result) => {
+trendingWorker.on('completed', (job, result) => {
   console.log(`Job ${job.id} completed:`, result);
 });
 
-trendingWorker.on("failed", (job, err) => {
+trendingWorker.on('failed', (job, err) => {
   console.error(`Job ${job?.id} failed:`, err);
 });
 
-trendingWorker.on("error", (err) => {
-  console.error("Worker error:", err.message);
+trendingWorker.on('error', (err) => {
+  console.error('Worker error:', err.message);
 });
