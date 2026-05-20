@@ -12,6 +12,7 @@ const frontendURL = (process.env.FRONTEND_URL ?? "https://ossurf.vercel.app").re
 
 export const auth = betterAuth({
   baseURL: backendURL,
+  secret: process.env.BETTER_AUTH_SECRET,
 
   database: drizzleAdapter(db, { provider: "pg" }),
 
