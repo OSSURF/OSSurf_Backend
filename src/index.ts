@@ -28,7 +28,6 @@ const PORT = process.env.PORT ?? 3000;
 app.use(
   cors({
     origin: function (origin, callback) {
-      const cleanOrigin = origin ? origin.replace(/\/$/, "") : "";
       const allowedOrigins = [
         "http://localhost:5173",
         "http://localhost:5174",
@@ -36,15 +35,12 @@ app.use(
         "http://127.0.0.1:5174",
         process.env.FRONTEND_URL,
         process.env.BETTER_AUTH_URL,
-      ]
-        .filter(Boolean)
-        .map(url => url!.replace(/\/$/, "")) as string[];
-
-      if (!origin || allowedOrigins.indexOf(cleanOrigin) !== -1) {
+      ].filter(Boolean) as string[];
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
-        console.error(`[CORS Blocked] Origin "${origin}" is not in allowed origins:`, allowedOrigins);
-        callback(new Error(`Not allowed by CORS: ${origin}`));
+        callback(new Error("Not allowed by CORS"));
       }
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
