@@ -25,6 +25,7 @@ import "./jobs/worker";
 const app = express();
 app.set("trust proxy", true);
 const PORT = process.env.PORT ?? 3000;
+const FRONTEND_URL = process.env.FRONTEND_URL?.trim();
 
 app.use(
   cors({
@@ -48,6 +49,26 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+app.post("/api/auth/sign-in/social", express.json(), (req, _res, next) => {
+  if (!FRONTEND_URL || typeof req.body !== "object" || req.body === null) {
+    return next();
+  }
+
+  if (!req.body.callbackURL) {
+    req.body.callbackURL = FRONTEND_URL;
+  }
+
+  if (!req.body.newUserCallbackURL) {
+    req.body.newUserCallbackURL = FRONTEND_URL;
+  }
+
+  if (!req.body.errorCallbackURL) {
+    req.body.errorCallbackURL = FRONTEND_URL;
+  }
+
+  return next();
+});
 
 // Better Auth handler (Express v4 syntax)
 app.all("/api/auth/*", toNodeHandler(auth));
