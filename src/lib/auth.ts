@@ -7,10 +7,11 @@ dotenv.config({ quiet: true } as any);
 
 
 
+const backendURL = (process.env.BETTER_AUTH_URL ?? "https://sourcesuf-backend.onrender.com").replace(/\/$/, "");
+const frontendURL = (process.env.FRONTEND_URL ?? "https://ossurf.vercel.app").replace(/\/$/, "");
+
 export const auth = betterAuth({
-  baseURL: process.env.NODE_ENV === "production"
-    ? "https://ossurf.vercel.app"
-    : (process.env.BETTER_AUTH_URL || "http://localhost:3000"),
+  baseURL: backendURL,
 
   database: drizzleAdapter(db, { provider: "pg" }),
 
@@ -20,11 +21,6 @@ export const auth = betterAuth({
     github: {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-      redirectURI: process.env.NODE_ENV === "production"
-        ? "https://ossurf.vercel.app/api/auth/callback/github"
-        : (process.env.FRONTEND_URL 
-            ? `${process.env.FRONTEND_URL.replace(/\/$/, "")}/api/auth/callback/github`
-            : "http://localhost:5173/api/auth/callback/github"),
     },
   },
 
@@ -32,16 +28,14 @@ export const auth = betterAuth({
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:3000",
-    process.env.FRONTEND_URL?.replace(/\/$/, ""),
-    "https://ossurf.vercel.app",
-    "https://*.vercel.app",
+    frontendURL,
   ].filter(Boolean),
 
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production",
     trustedProxyHeaders: true,
     defaultCookieAttributes: {
-      sameSite: "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       secure: process.env.NODE_ENV === "production",
     },
   },
