@@ -16,7 +16,7 @@ export const auth = betterAuth({
 
   database: drizzleAdapter(db, { provider: "pg" }),
 
-  emailAndPassword: { enabled: true },
+  emailAndPassword: { enabled: false },
 
   socialProviders: {
     github: {
@@ -36,7 +36,7 @@ export const auth = betterAuth({
     useSecureCookies: process.env.NODE_ENV === "production",
     trustedProxyHeaders: true,
     defaultCookieAttributes: {
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
     },
   },
