@@ -50,6 +50,18 @@ app.use(
 );
 
 // Better Auth handler (Express v4 syntax)
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === "production") {
+    // Override headers so that Better Auth perceives the request as coming from the frontend domain.
+    // This is required because Vercel proxies/rewrites the frontend domain requests to the Render backend,
+    // which normally causes Host / X-Forwarded-Host header mismatch errors.
+    req.headers.host = "ossurf.vercel.app";
+    req.headers["x-forwarded-host"] = "ossurf.vercel.app";
+    req.headers["x-forwarded-proto"] = "https";
+  }
+  next();
+});
+
 app.all("/api/auth/*", toNodeHandler(auth));
 
 app.use(express.json());
