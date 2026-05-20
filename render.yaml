@@ -1,5 +1,5 @@
 services:
-
+  # Node Backend (Express API)
   - type: web
     name: sourcesurf-backend
     env: node
@@ -13,19 +13,22 @@ services:
       - key: PORT
         value: 3000
       - key: DATABASE_URL
-        sync: true
+        sync: false
       - key: REDIS_URL
-        sync: true
+        sync: false 
       - key: SCRAPER_URL
-        sync: true
+        sync: false
       - key: BETTER_AUTH_SECRET
         generateValue: true
       - key: BETTER_AUTH_URL
-        sync: true
+        sync: false
       - key: GITHUB_CLIENT_ID
-        sync: true
+        sync: false
       - key: GITHUB_CLIENT_SECRET
-        sync: true
+        sync: false
+
+  # Redis Instance
   - type: redis
     name: sourcesurf-redis
     plan: free
+    ipAllowList: [] # Blocks external public access (only allows internal Render services)
