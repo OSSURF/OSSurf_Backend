@@ -8,9 +8,9 @@ dotenv.config({ quiet: true } as any);
 
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || (process.env.NODE_ENV === "production"
+  baseURL: process.env.NODE_ENV === "production"
     ? "https://ossurf.vercel.app"
-    : "http://localhost:3000"),
+    : (process.env.BETTER_AUTH_URL || "http://localhost:3000"),
 
   database: drizzleAdapter(db, { provider: "pg" }),
 
@@ -38,6 +38,7 @@ export const auth = betterAuth({
   ].filter(Boolean),
 
   advanced: {
+    trustedProxyHeaders: true,
     defaultCookieAttributes: {
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       secure: process.env.NODE_ENV === "production",
