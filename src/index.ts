@@ -23,6 +23,7 @@ import { registerSchedules } from "./jobs/scheduler";
 import "./jobs/worker";
 
 const app = express();
+app.set("trust proxy", true);
 const PORT = process.env.PORT ?? 3000;
 
 app.use(
@@ -36,7 +37,6 @@ app.use(
         process.env.FRONTEND_URL,
         process.env.BETTER_AUTH_URL,
       ].filter(Boolean) as string[];
-      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
