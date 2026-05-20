@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "src/app.ts",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon --watch src --ext ts,json --exec \"tsx src/index.ts\"",
     "start": "tsx src/index.ts",
@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "postgres": "^3.4.7",
+    "tsx": "^4.21.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {
@@ -34,7 +35,6 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.0.3",
-    "drizzle-kit": "^0.31.8",
-    "tsx": "^4.21.0"
+    "drizzle-kit": "^0.31.8"
   }
 }
