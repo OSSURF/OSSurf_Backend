@@ -30,6 +30,7 @@ export const auth = betterAuth({
     "http://127.0.0.1:5173",
     "http://127.0.0.1:5174",
     process.env.FRONTEND_URL as string,
+    process.env.BETTER_AUTH_URL as string,
   ].filter(Boolean),
   account: {
     accountLinking: {

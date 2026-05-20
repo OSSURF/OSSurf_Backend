@@ -33,7 +33,9 @@ app.use(
         "http://localhost:5174",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
-      ];
+        process.env.FRONTEND_URL,
+        process.env.BETTER_AUTH_URL,
+      ].filter(Boolean) as string[];
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
