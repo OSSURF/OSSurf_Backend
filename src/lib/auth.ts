@@ -8,10 +8,7 @@ dotenv.config({ quiet: true } as any);
 
 
 const frontendURL = (process.env.FRONTEND_URL ?? "https://ossurf.vercel.app").replace(/\/$/, "");
-const isProd = process.env.NODE_ENV === "production" || frontendURL.startsWith("https://");
-const authURL = isProd ? frontendURL : "http://localhost:5173";
-
-process.env.BETTER_AUTH_URL = authURL;
+const authURL = process.env.BETTER_AUTH_URL ?? "https://sourcesuf-backend.onrender.com";
 
 export const auth = betterAuth({
   baseURL: authURL,
@@ -36,11 +33,11 @@ export const auth = betterAuth({
   ].filter(Boolean),
 
   advanced: {
-    useSecureCookies: isProd,
+    useSecureCookies: process.env.NODE_ENV === "production" || authURL.startsWith("https://"),
     trustedProxyHeaders: true,
     defaultCookieAttributes: {
-      sameSite: "lax",
-      secure: isProd,
+      sameSite: "none",
+      secure: true,
     },
   },
 
