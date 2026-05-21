@@ -11,8 +11,6 @@ const frontendURL = (process.env.FRONTEND_URL ?? "https://ossurf.vercel.app").re
 const isProd = process.env.NODE_ENV === "production" || frontendURL.startsWith("https://");
 const authURL = isProd ? frontendURL : "http://localhost:5173";
 
-// Programmatically override BETTER_AUTH_URL env var to ensure Better Auth is forced to use the
-// frontend URL (via proxy) as the baseURL, even if it is incorrectly set in the Render dashboard or .env file.
 process.env.BETTER_AUTH_URL = authURL;
 
 export const auth = betterAuth({
