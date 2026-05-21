@@ -30,6 +30,7 @@ export const auth = betterAuth({
     "http://localhost:5174",
     "http://localhost:3000",
     frontendURL,
+    backendURL, // backend must trust itself for OAuth callbacks
   ].filter(Boolean),
 
   advanced: {
