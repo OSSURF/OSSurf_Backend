@@ -36,8 +36,8 @@ export const auth = betterAuth({
     useSecureCookies: process.env.NODE_ENV === "production" || authURL.startsWith("https://"),
     trustedProxyHeaders: true,
     defaultCookieAttributes: {
-      sameSite: "none",
-      secure: true,
+      sameSite: (process.env.NODE_ENV === "production" || authURL.startsWith("https://")) ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production" || authURL.startsWith("https://"),
     },
   },
 
