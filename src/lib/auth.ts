@@ -7,11 +7,12 @@ dotenv.config({ quiet: true } as any);
 
 
 
-const backendURL = (process.env.BETTER_AUTH_URL ?? "https://sourcesuf-backend.onrender.com").replace(/\/$/, "");
 const frontendURL = (process.env.FRONTEND_URL ?? "https://ossurf.vercel.app").replace(/\/$/, "");
+const isProd = process.env.NODE_ENV === "production";
+const authURL = isProd ? frontendURL : "http://localhost:5173";
 
 export const auth = betterAuth({
-  baseURL: backendURL,
+  baseURL: authURL,
   secret: process.env.BETTER_AUTH_SECRET,
 
   database: drizzleAdapter(db, { provider: "pg" }),
@@ -30,15 +31,14 @@ export const auth = betterAuth({
     "http://localhost:5174",
     "http://localhost:3000",
     frontendURL,
-    backendURL, // backend must trust itself for OAuth callbacks
   ].filter(Boolean),
 
   advanced: {
-    useSecureCookies: process.env.NODE_ENV === "production",
+    useSecureCookies: isProd,
     trustedProxyHeaders: true,
     defaultCookieAttributes: {
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: isProd,
     },
   },
 
