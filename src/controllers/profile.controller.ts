@@ -369,10 +369,33 @@ export const getProfile = async (req: Request, res: Response) => {
           author: item.user?.login || profileData.username,
         })) : [];
 
+        const sortedRepos = [...effectiveRepos]
+          .sort((a, b) => {
+            const starsA = (a as any).stargazers_count ?? (a as any).stars ?? 0;
+            const starsB = (b as any).stargazers_count ?? (b as any).stars ?? 0;
+            if (starsB !== starsA) {
+              return starsB - starsA;
+            }
+            const dateA = new Date((a as any).updated_at ?? 0).getTime();
+            const dateB = new Date((b as any).updated_at ?? 0).getTime();
+            return dateB - dateA;
+          })
+          .slice(0, 4);
+
+        const pinnedRepos = sortedRepos.map((repo: any) => ({
+          name: repo.name,
+          description: repo.description ?? "",
+          language: repo.language ?? null,
+          stars: repo.stargazers_count ?? repo.stars ?? 0,
+          forks: repo.forks_count ?? repo.forks ?? 0,
+          htmlUrl: repo.html_url ?? `https://github.com/${profileData.username}/${repo.name}`,
+        }));
+
         const repsonseData = {
           ...profileData,
           recentPrs,
           recentIssues,
+          pinnedRepos,
           stats: {
             totalCommits: totalCommits,
             totalPrs: totalPrs,

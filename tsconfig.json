@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    // ...existing code...
+    "target": "ES2022",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "baseUrl": "./src",
     "moduleResolution": "node",
     "paths": {
