@@ -71,6 +71,13 @@ app.use("/api/admin", adminRoutes);
 app.get("/", (req: Request, res: Response) => {
   res.send("SourceSurf API is running");
 });
+app.get("/health", (req: Request, res: Response) => {
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
 app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   await registerSchedules();
