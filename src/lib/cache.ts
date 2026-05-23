@@ -43,7 +43,6 @@ export async function cached<T>(
  * Invalidate a specific cache key.
  */
 export async function invalidateCache(key: string): Promise<void> {
-  if (!isRedisConnected()) return;
   try {
     await redis.del(key);
   } catch {
@@ -56,7 +55,6 @@ export async function invalidateCache(key: string): Promise<void> {
  * Uses SCAN to avoid blocking Redis.
  */
 export async function invalidateCachePattern(pattern: string): Promise<void> {
-  if (!isRedisConnected()) return;
   try {
     let cursor = "0";
     do {

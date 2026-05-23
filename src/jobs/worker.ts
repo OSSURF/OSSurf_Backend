@@ -17,13 +17,28 @@ interface ScrapeTrendingData {
 async function processTrendingJob(job: Job<ScrapeTrendingData>) {
   const { period } = job.data;
 
-  console.log(`Calling scraper for period: ${period}`);
-  await job.updateProgress(10);
+  let data;
+  const maxRetries = 5;
+  const delayMs = 12000; // 12 seconds delay between retries (~60 seconds total to allow Render spin up)
 
-  const { data } = await axios.get(`${SCRAPER_URL}/scrape`, {
-    params: { period },
-    timeout: 30_000,
-  });
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Calling scraper for period: ${period} (Attempt ${attempt}/${maxRetries})`);
+      const response = await axios.get(`${SCRAPER_URL}/scrape`, {
+        params: { period },
+        timeout: 25_000,
+      });
+      data = response.data;
+      break;
+    } catch (err) {
+      console.warn(`Scraper call failed on attempt ${attempt}: ${(err as Error).message}`);
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to fetch from scraper after ${maxRetries} attempts. Original error: ${(err as Error).message}`);
+      }
+      console.log(`Waiting ${delayMs / 1000}s for scraper to spin up...`);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
 
   const scrapedRepos = data.repos;
   console.log(` Received ${scrapedRepos.length} repos from scraper`);
@@ -33,65 +48,75 @@ async function processTrendingJob(job: Job<ScrapeTrendingData>) {
   await job.updateProgress(30);
 
   let processed = 0;
-  for (const item of scrapedRepos) {
-    const { owner, repo, stars_earned } = item;
-    const full_name = `${owner}/${repo}`;
+  const batchSize = 5;
 
-    try {
-      const githubRes = await octokit.repos.get({ owner, repo });
-      const ghData = githubRes.data;
+  for (let i = 0; i < scrapedRepos.length; i += batchSize) {
+    const batch = scrapedRepos.slice(i, i + batchSize);
 
-      const [inserted] = await db
-        .insert(repos)
-        .values({
-          github_id: ghData.id,
-          owner: ghData.owner.login,
-          repo_name: ghData.name,
-          full_name: ghData.full_name,
-          url: ghData.html_url,
-          description: ghData.description,
-          language: ghData.language,
-          stargazers_count: ghData.stargazers_count,
-          forks_count: ghData.forks_count,
-          watchers_count: ghData.watchers_count || 0,
-          open_issues_count: ghData.open_issues_count || 0,
-          updated_at: new Date(ghData.updated_at),
-          last_synced_at: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: repos.github_id,
-          set: {
-            stargazers_count: ghData.stargazers_count,
-            forks_count: ghData.forks_count,
-            watchers_count: ghData.watchers_count || 0,
-            open_issues_count: ghData.open_issues_count || 0,
-            updated_at: new Date(ghData.updated_at),
-            last_synced_at: new Date(),
-            description: ghData.description,
-          },
-        })
-        .returning({ id: repos.id });
+    await Promise.all(
+      batch.map(async (item: any) => {
+        const { owner, repo, stars_earned } = item;
+        const full_name = `${owner}/${repo}`;
 
-      await db
-        .insert(trending_repos)
-        .values({
-          repo_id: inserted.id,
-          period: period,
-          stars_earned: stars_earned || 0,
-          created_at: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: [trending_repos.repo_id, trending_repos.period],
-          set: {
-            stars_earned: stars_earned || 0,
-            created_at: new Date(),
-          },
-        });
+        try {
+          const githubRes = await octokit.repos.get({ owner, repo });
+          const ghData = githubRes.data;
 
-      processed++;
-    } catch (err) {
-      console.error(`Error processing ${full_name}:`, (err as Error).message);
-    }
+          const [inserted] = await db
+            .insert(repos)
+            .values({
+              github_id: ghData.id,
+              owner: ghData.owner.login,
+              repo_name: ghData.name,
+              full_name: ghData.full_name,
+              url: ghData.html_url,
+              description: ghData.description,
+              language: ghData.language,
+              stargazers_count: ghData.stargazers_count,
+              forks_count: ghData.forks_count,
+              watchers_count: ghData.watchers_count || 0,
+              open_issues_count: ghData.open_issues_count || 0,
+              updated_at: new Date(ghData.updated_at),
+              last_synced_at: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: repos.github_id,
+              set: {
+                stargazers_count: ghData.stargazers_count,
+                forks_count: ghData.forks_count,
+                watchers_count: ghData.watchers_count || 0,
+                open_issues_count: ghData.open_issues_count || 0,
+                updated_at: new Date(ghData.updated_at),
+                last_synced_at: new Date(),
+                description: ghData.description,
+              },
+            })
+            .returning({ id: repos.id });
+
+          if (inserted) {
+            await db
+              .insert(trending_repos)
+              .values({
+                repo_id: inserted.id,
+                period: period,
+                stars_earned: stars_earned || 0,
+                created_at: new Date(),
+              })
+              .onConflictDoUpdate({
+                target: [trending_repos.repo_id, trending_repos.period],
+                set: {
+                  stars_earned: stars_earned || 0,
+                  created_at: new Date(),
+                },
+              });
+          }
+
+          processed++;
+        } catch (err) {
+          console.error(`Error processing ${full_name}:`, (err as Error).message);
+        }
+      })
+    );
 
     const progress = 30 + Math.round((processed / scrapedRepos.length) * 60);
     await job.updateProgress(progress);

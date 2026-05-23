@@ -27,7 +27,8 @@ redis.on("close", () => {
   connected = false;
 });
 
-export const isRedisConnected = () => connected;
+export const isRedisConnected = () => 
+  connected || redis.status === "ready" || redis.status === "connect";
 
 // Connect on import — non-blocking
 redis.connect().catch((err) => {
