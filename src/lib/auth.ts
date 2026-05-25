@@ -45,11 +45,11 @@ export const auth = betterAuth({
 
 
   advanced: {
-    useSecureCookies: isProd,
+    useSecureCookies: true,
     trustedProxyHeaders: true,
     defaultCookieAttributes: {
-      sameSite: isProd ? 'none' : 'lax',
-      secure: isProd,
+      sameSite: 'none',
+      secure: true,
     },
   },
 });
