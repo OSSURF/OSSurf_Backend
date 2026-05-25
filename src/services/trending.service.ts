@@ -23,18 +23,14 @@ export const getTrendingRepos = async (
   period: string,
 ): Promise<TrendingRepo[]> => {
   const cacheKey = `trending:${period}`;
-
-  // Try cache first
   if (isRedisConnected()) {
     try {
       const cached = await redis.get(cacheKey);
       if (cached) return JSON.parse(cached) as TrendingRepo[];
     } catch {
-      // ignore, fall through to fetch
     }
   }
 
-  // Fetch directly from database
   const result = await db
     .select({
       id: repos.id,
@@ -57,9 +53,8 @@ export const getTrendingRepos = async (
 
   const data: TrendingRepo[] = result;
 
-  // Cache result for 15 minutes
   if (isRedisConnected()) {
-    redis.set(cacheKey, JSON.stringify(data), "EX", 15 * 60).catch(() => {});
+    redis.set(cacheKey, JSON.stringify(data), "EX", 15 * 60).catch(() => { });
   }
 
   return data;

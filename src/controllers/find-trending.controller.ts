@@ -18,8 +18,6 @@ export const getTrendingList = async (req: Request, res: Response) => {
       },
     );
 
-    // To get total pages, we might need allRepos count.
-    // However, getTrendingRepos is already cached.
     const allRepos = await getTrendingRepos(period);
     const total = allRepos.length;
     const totalPages = Math.ceil(total / perPage);

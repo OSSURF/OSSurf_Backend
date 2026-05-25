@@ -19,7 +19,7 @@ async function processTrendingJob(job: Job<ScrapeTrendingData>) {
 
   let data;
   const maxRetries = 5;
-  const delayMs = 12000; // 12 seconds delay between retries (~60 seconds total to allow Render spin up)
+  const delayMs = 12000;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
