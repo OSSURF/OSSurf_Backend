@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '../db/client';
+import { bearer } from 'better-auth/plugins';
 import dotenv from 'dotenv';
 
 dotenv.config({ quiet: true } as any);
@@ -26,6 +27,10 @@ export const auth = betterAuth({
     },
   },
 
+  plugins: [
+    bearer(),
+  ],
+
   trustedOrigins: [
     'http://localhost:5173',
     'http://localhost:5174',
@@ -41,8 +46,6 @@ export const auth = betterAuth({
       trustedProviders: ['github'],
     },
   },
-
-
 
   advanced: {
     useSecureCookies: true,

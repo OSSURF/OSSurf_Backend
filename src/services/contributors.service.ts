@@ -15,35 +15,59 @@ export interface ContributorRanking {
   bio?: string | null;
 }
 
-// In-memory cache for mapping user IDs to GitHub login names and bios
 interface UserMeta {
   username: string;
   bio: string | null;
 }
 const userMetaCache = new Map<string, UserMeta>();
 
-// Score formula: mergedPRs*10 + openPRs*2 + issues*1
 export async function getContributorRankings(): Promise<ContributorRanking[]> {
-  // Get all users
   const users = await db.select().from(user);
 
-  // Aggregate stats and metadata in parallel for maximum speed
+
+  const [allPRs, allIssues, allAccounts] = await Promise.all([
+    db.select().from(tracked_prs),
+    db.select().from(tracked_issues),
+    db.select().from(account).where(eq(account.providerId, "github")),
+  ]);
+
+
+  const prsByUser = new Map<string, typeof tracked_prs.$inferSelect[]>();
+  for (const pr of allPRs) {
+    let list = prsByUser.get(pr.user_id);
+    if (!list) {
+      list = [];
+      prsByUser.set(pr.user_id, list);
+    }
+    list.push(pr);
+  }
+
+  const issuesByUser = new Map<string, typeof tracked_issues.$inferSelect[]>();
+  for (const issue of allIssues) {
+    let list = issuesByUser.get(issue.user_id);
+    if (!list) {
+      list = [];
+      issuesByUser.set(issue.user_id, list);
+    }
+    list.push(issue);
+  }
+
+  const accountsByUser = new Map<string, typeof account.$inferSelect>();
+  for (const acc of allAccounts) {
+    accountsByUser.set(acc.userId, acc);
+  }
+
+
   const rankings = await Promise.all(
     users.map(async (u) => {
-      // Fetch PRs, Issues and Github Account in parallel
-      const [prs, issues, githubAccount] = await Promise.all([
-        db.select().from(tracked_prs).where(eq(tracked_prs.user_id, u.id)),
-        db.select().from(tracked_issues).where(eq(tracked_issues.user_id, u.id)),
-        db.query.account.findFirst({
-          where: and(eq(account.userId, u.id), eq(account.providerId, "github")),
-        }),
-      ]);
+      const prs = prsByUser.get(u.id) || [];
+      const issues = issuesByUser.get(u.id) || [];
+      const githubAccount = accountsByUser.get(u.id);
 
       const mergedPRs = prs.filter((pr) => pr.state === "merged").length;
       const openPRs = prs.filter((pr) => pr.state === "open").length;
       const score = mergedPRs * 10 + openPRs * 2 + issues.length * 1;
 
-      // Resolve GitHub login username and bio
       let githubUsername = "";
       let githubBio: string | null = null;
 
@@ -54,7 +78,6 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
       } else {
         if (githubAccount?.accountId) {
           try {
-            // Fetch username and bio using GitHub ID via public endpoint
             const response = await axios.get(`https://api.github.com/user/${githubAccount.accountId}`, {
               headers: {
                 "User-Agent": "sourcesurf-backend",
@@ -71,7 +94,6 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
           }
         }
 
-        // If not resolved from GitHub API (e.g., credential user or rate limit), use tracked data fallback
         if (!githubUsername) {
           if (prs.length > 0) {
             githubUsername = prs[0].author;
@@ -82,7 +104,6 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
       }
 
       if (!githubUsername) {
-        // Safe fallback: URL-friendly spacetrimmed lowercase name
         githubUsername = u.name.replace(/\s+/g, "").toLowerCase();
       }
 
@@ -100,7 +121,6 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
     })
   );
 
-  // Sort by score descending
   rankings.sort((a, b) => b.score - a.score);
   return rankings;
 }

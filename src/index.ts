@@ -50,7 +50,32 @@ app.use(
   }),
 );
 
-app.all("/api/auth/*", toNodeHandler(auth));
+app.all("/api/auth/*", (req: Request, res: Response, next) => {
+  const originalRedirect = res.redirect.bind(res);
+  res.redirect = function (url: string) {
+    const setCookieHeader = res.getHeader("set-cookie");
+    let sessionToken = "";
+
+    if (setCookieHeader) {
+      const cookies = Array.isArray(setCookieHeader) ? setCookieHeader : [String(setCookieHeader)];
+      for (const cookie of cookies) {
+        const match = cookie.match(/(?:__Secure-)?better-auth\.session_token=([^;]+)/);
+        if (match) {
+          sessionToken = match[1];
+          break;
+        }
+      }
+    }
+
+    if (sessionToken) {
+      const separator = url.includes("?") ? "&" : "?";
+      url = `${url}${separator}token=${encodeURIComponent(sessionToken)}`;
+    }
+    return originalRedirect(url);
+  } as any;
+
+  toNodeHandler(auth)(req, res, next);
+});
 
 app.use(express.json());
 
