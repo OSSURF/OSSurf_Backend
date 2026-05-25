@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '../db/client';
+import { oAuthProxy } from "better-auth/plugins";
 import dotenv from 'dotenv';
 
 dotenv.config({ quiet: true } as any);
@@ -41,6 +42,12 @@ export const auth = betterAuth({
       trustedProviders: ['github'],
     },
   },
+
+  plugins: [
+    oAuthProxy({
+      productionURL: frontendURL,
+    }),
+  ],
 
   advanced: {
     useSecureCookies: isProd,
