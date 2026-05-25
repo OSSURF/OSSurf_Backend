@@ -10,6 +10,7 @@ const frontendURL = (
 ).replace(/\/$/, '');
 const authURL =
   process.env.BETTER_AUTH_URL ?? 'https://sourcesuf-backend.onrender.com';
+const isProd = process.env.NODE_ENV === 'production';
 
 export const auth = betterAuth({
   baseURL: authURL,
@@ -42,9 +43,11 @@ export const auth = betterAuth({
   },
 
   advanced: {
+    useSecureCookies: isProd,
+    trustedProxyHeaders: true,
     defaultCookieAttributes: {
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: isProd ? 'none' : 'lax',
+      secure: isProd,
     },
   },
 });
