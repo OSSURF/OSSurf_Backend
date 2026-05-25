@@ -8,11 +8,9 @@ dotenv.config({ quiet: true } as any);
 const frontendURL = (
   process.env.FRONTEND_URL ?? 'https://ossurf.vercel.app'
 ).replace(/\/$/, '');
+const authURL =
+  process.env.BETTER_AUTH_URL ?? 'https://sourcesuf-backend.onrender.com';
 const isProd = process.env.NODE_ENV === 'production';
-
-const authURL = isProd
-  ? frontendURL
-  : (process.env.BETTER_AUTH_URL ?? 'http://localhost:3000');
 
 export const auth = betterAuth({
   baseURL: authURL,
