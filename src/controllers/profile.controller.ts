@@ -302,41 +302,39 @@ export const getProfile = async (req: Request, res: Response) => {
         ];
         const now = new Date();
 
+        const oneYearAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+        const oneYearAgoStr = `${oneYearAgo.getFullYear()}-${String(oneYearAgo.getMonth() + 1).padStart(2, "0")}-01`;
+
+        let yearItems: any[] = [];
+        try {
+          const yearSearchRes = await githubClient.rest.search.issuesAndPullRequests({
+            q: `author:${profileData.username} created:>=${oneYearAgoStr}`,
+            per_page: 100,
+          });
+          yearItems = yearSearchRes.data.items || [];
+        } catch (err) {
+          console.error("Failed to fetch year search items:", err);
+        }
+
         for (let i = 11; i >= 0; i--) {
           const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
           const year = date.getFullYear();
-          const month = date.getMonth() + 1;
-          const monthName = monthNames[date.getMonth()];
+          const month = date.getMonth();
+          const monthName = monthNames[month];
 
-          const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-          const endDate = new Date(year, month, 0);
-          const endDateStr = `${year}-${String(month).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
+          const monthItems = yearItems.filter((item: any) => {
+            const createdDate = new Date(item.created_at);
+            return createdDate.getFullYear() === year && createdDate.getMonth() === month;
+          });
 
-          try {
-            const monthPrs =
-              await githubClient.rest.search.issuesAndPullRequests({
-                q: `author:${profileData.username} type:pr created:${startDate}..${endDateStr}`,
-                per_page: 1,
-              });
+          const prsCount = monthItems.filter((item: any) => "pull_request" in item).length;
+          const issuesCount = monthItems.length - prsCount;
 
-            const monthIssues =
-              await githubClient.rest.search.issuesAndPullRequests({
-                q: `author:${profileData.username} type:issue created:${startDate}..${endDateStr}`,
-                per_page: 1,
-              });
-
-            activityHistory.push({
-              month: monthName,
-              prs: monthPrs.data.total_count,
-              issues: monthIssues.data.total_count,
-            });
-          } catch (error) {
-            activityHistory.push({
-              month: monthName,
-              prs: 0,
-              issues: 0,
-            });
-          }
+          activityHistory.push({
+            month: monthName,
+            prs: prsCount,
+            issues: issuesCount,
+          });
         }
 
         const topLanguagues = Object.entries(languagesMap)
