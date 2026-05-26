@@ -9,8 +9,9 @@ dotenv.config({ quiet: true } as any);
 const frontendURL = (
   process.env.FRONTEND_URL ?? 'https://ossurf.vercel.app'
 ).replace(/\/$/, '');
-const authURL =
-  process.env.BETTER_AUTH_URL ?? 'https://sourcesuf-backend.onrender.com';
+
+
+const authURL = frontendURL;
 const isProd = process.env.NODE_ENV === 'production';
 
 export const auth = betterAuth({
@@ -36,6 +37,7 @@ export const auth = betterAuth({
     'http://localhost:5174',
     'http://localhost:3000',
     frontendURL,
+    'https://sourcesuf-backend.onrender.com',
   ].filter((url): url is string => Boolean(url)),
 
   account: {
@@ -48,11 +50,14 @@ export const auth = betterAuth({
   },
 
   advanced: {
-    useSecureCookies: true,
+    useSecureCookies: isProd,
+    // Required: trust X-Forwarded-* headers from Vercel/Render proxy
     trustedProxyHeaders: true,
+    // 'lax' works because Vercel proxies /api/* making auth same-origin.
+    // 'none' would signal third-party cookies — exactly what Safari ITP blocks.
     defaultCookieAttributes: {
-      sameSite: 'none',
-      secure: true,
+      sameSite: 'lax',
+      secure: isProd,
     },
   },
 });
