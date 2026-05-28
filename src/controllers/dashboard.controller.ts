@@ -49,12 +49,10 @@ export const getDashboard = async (req: Request, res: Response) => {
           Authorization: `Bearer ${githubAccount.accessToken}`,
         };
 
-        // 1. Get User Info
         const { data: githubUser } = await axios.get("https://api.github.com/user", {
           headers,
         });
         globalStats.username = githubUser.login;
-        // 2. Search Counts
         const searchUrl = "https://api.github.com/search/issues";
         const [prRes, mergedRes, issueRes] = await Promise.all([
           axios.get(`${searchUrl}?q=type:pr+author:${githubUser.login}`, { headers }),
@@ -69,7 +67,6 @@ export const getDashboard = async (req: Request, res: Response) => {
         globalStats.mergedPrs = mergedRes.data.total_count;
         globalStats.totalIssues = issueRes.data.total_count;
 
-        // Fetch contribution calendar data
         const contributionsRes = await fetch(
           `https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(githubUser.login)}?y=last`,
         );
@@ -80,7 +77,6 @@ export const getDashboard = async (req: Request, res: Response) => {
           globalStats.contributionTotals = contributionsJson.total ?? {};
         }
 
-        // Keep local DB user in sync with latest GitHub stats
         await db
           .update(user)
           .set({
@@ -97,8 +93,6 @@ export const getDashboard = async (req: Request, res: Response) => {
       }
     }
 
-    // Fallback: If no token or token fetch failed, but we have a username,
-    // we can still fetch the public contribution calendar
     if (
       globalStats.username &&
       (!globalStats.contributionCalendar || globalStats.contributionCalendar.length === 0)
