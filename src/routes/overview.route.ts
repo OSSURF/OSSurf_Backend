@@ -1,16 +1,11 @@
 import { requireAuth } from "@/middleware/auth.middleware";
-import {Router} from "express";
-import { getDashboard } from "../controllers/dashboard.controller";
+import { Router } from "express";
+import { getOverview } from "../controllers/overview.controller";
 
 const router = Router();
 
 router.use(requireAuth);
 
-
-
-router.get('/',getDashboard);
+router.get("/", getOverview);
 
 export default router;
-
-
-

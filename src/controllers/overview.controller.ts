@@ -18,7 +18,7 @@ type ContributionsApiResponse = {
   contributions: Contribution[];
 };
 
-export const getDashboard = async (req: Request, res: Response) => {
+export const getOverview = async (req: Request, res: Response) => {
   try {
     const userId = getUserFromLocals(res.locals).id;
     const [trackedPrs, trackedIssues] = await Promise.all([
@@ -144,9 +144,9 @@ export const getDashboard = async (req: Request, res: Response) => {
       .slice(0, 5);
     res.json({ stats, recentPrs, recentIssues });
   } catch (error: any) {
-    console.error("Dashboard error:", error);
+    console.error("Overview error:", error);
     res
       .status(500)
-      .json({ error: error.message || "Failed to fetch dashboard" });
+      .json({ error: error.message || "Failed to fetch overview" });
   }
 };
