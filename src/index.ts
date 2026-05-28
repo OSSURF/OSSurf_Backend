@@ -64,7 +64,7 @@ app.use("/api/findIssues", findIssues);
 app.use("/api/findGSOC", findGSOC);
 app.use("/api/track-prs", trackPrsRoutes);
 app.use("/api/track-issues", trackIssuesRoutes);
-app.use("/api/dashboard/", dashboardRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/yc", ycRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/contributors", contributorsRoutes);
