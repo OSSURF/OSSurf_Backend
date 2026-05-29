@@ -80,7 +80,6 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
       const localMerged = prs.filter((pr) => pr.state === "merged").length;
       const localOpen = prs.filter((pr) => pr.state === "open").length;
       const localIssues = issues.length;
-      // Score always computed from locally tracked data to stay consistent with displayed stats
       const localScore = localMerged * 10 + localOpen * 2 + localIssues * 1;
 
       const cacheExpiryMs = 24 * 60 * 60 * 1000;
