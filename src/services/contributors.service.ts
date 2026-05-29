@@ -79,7 +79,9 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
 
       const localMerged = prs.filter((pr) => pr.state === "merged").length;
       const localOpen = prs.filter((pr) => pr.state === "open").length;
-      const localScore = localMerged * 10 + localOpen * 2 + issues.length * 1;
+      const localIssues = issues.length;
+      // Score always computed from locally tracked data to stay consistent with displayed stats
+      const localScore = localMerged * 10 + localOpen * 2 + localIssues * 1;
 
       const cacheExpiryMs = 24 * 60 * 60 * 1000;
       const isStale = u.statsUpdatedAt
@@ -87,7 +89,7 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
         : true;
 
       if (githubAccount?.accountId && isStale) {
-        refreshUserStats(u.id, githubAccount.accountId, localMerged, localOpen, issues.length);
+        refreshUserStats(u.id, githubAccount.accountId, localMerged, localOpen, localIssues);
       }
 
       let githubUsername = u.githubUsername || "";
@@ -106,10 +108,10 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
         id: u.id,
         name: u.name,
         avatarUrl: u.image || "",
-        score: u.score || localScore,
-        mergedPRs: u.mergedPRs || localMerged,
-        openPRs: u.openPRs || localOpen,
-        issues: u.issues || issues.length,
+        score: localScore,
+        mergedPRs: localMerged,
+        openPRs: localOpen,
+        issues: localIssues,
         username: githubUsername,
         bio: u.githubBio,
       };
