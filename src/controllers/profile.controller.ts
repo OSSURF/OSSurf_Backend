@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import { octokit, publicOctokit } from "../lib/github";
 import { Octokit } from "@octokit/rest";
 import { cached, cacheKeys, cacheTTL } from "../lib/cache";
+import { db } from "../db/client";
+import { user } from "../db/schemas";
+import { eq } from "drizzle-orm";
 
 type Contribution = {
   date: string;
@@ -418,6 +421,21 @@ export const getProfile = async (req: Request, res: Response) => {
             contributionTotals: contributionsTotal,
           },
         };
+
+        // Persist stats to user row in background so contributor rankings stay accurate
+        db.update(user)
+          .set({
+            mergedPRs: mergedPrs,
+            openPRs: openPrs,
+            issues: totalIssues,
+            score: mergedPrs * 10 + openPrs * 2 + totalIssues * 1,
+            githubUsername: profileData.username,
+            githubBio: profileData.user.bio ?? null,
+            statsUpdatedAt: new Date(),
+          })
+          .where(eq(user.githubUsername, profileData.username))
+          .catch((err) => console.error("Failed to persist profile stats:", err));
+
         return repsonseData;
       },
     );
