@@ -103,8 +103,7 @@ export async function getContributorRankings(): Promise<ContributorRanking[]> {
         githubUsername = u.name.replace(/\s+/g, "").toLowerCase();
       }
 
-      // statsUpdatedAt being set means real GitHub stats were fetched (via profile view or background refresh).
-      // Use those cached values. If never fetched yet, fall back to local tracked data.
+
       const hasRealStats = u.statsUpdatedAt !== null;
       const displayMerged = hasRealStats ? u.mergedPRs : localMerged;
       const displayOpen = hasRealStats ? u.openPRs : localOpen;
