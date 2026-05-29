@@ -3,7 +3,7 @@ import { octokit, publicOctokit } from "../lib/github";
 import { Octokit } from "@octokit/rest";
 import { cached, cacheKeys, cacheTTL } from "../lib/cache";
 import { db } from "../db/client";
-import { user } from "../db/schemas";
+import { user as userTable } from "../db/schemas";
 import { eq } from "drizzle-orm";
 
 type Contribution = {
@@ -422,7 +422,7 @@ export const getProfile = async (req: Request, res: Response) => {
           },
         };
 
-        db.update(user)
+        db.update(userTable)
           .set({
             mergedPRs: mergedPrs,
             openPRs: openPrs,
@@ -432,7 +432,7 @@ export const getProfile = async (req: Request, res: Response) => {
             githubBio: profileData.user.bio ?? null,
             statsUpdatedAt: new Date(),
           })
-          .where(eq(user.githubUsername, profileData.username))
+          .where(eq(userTable.githubUsername, profileData.username))
           .catch((err) => console.error("Failed to persist profile stats:", err));
 
         return repsonseData;
