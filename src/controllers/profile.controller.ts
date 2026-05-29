@@ -422,7 +422,6 @@ export const getProfile = async (req: Request, res: Response) => {
           },
         };
 
-        // Persist stats to user row in background so contributor rankings stay accurate
         db.update(user)
           .set({
             mergedPRs: mergedPrs,
